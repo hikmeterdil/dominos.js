@@ -1,4 +1,15 @@
-const createDeck = () => {
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>Click the button to start the game.</p>
+
+<button onclick="game()">Try it</button>
+
+<p id="demo"></p>
+
+<script>
+    const createDeck = () => {
   const tiles = [];
   for (let i = 0; i < 7; i++) {
     for (let k = i; k < 7; k++) {
@@ -82,3 +93,8 @@ const game = () => {
   }
 };
 game();
+    
+</script>
+
+</body>
+</html>
