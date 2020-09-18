@@ -29,6 +29,7 @@ const playTurn = (tiles, hand, board) => {
     const n1 = hand[i][0];
     const n2 = hand[i][1];
     if (n1 == b1) {
+      setTimeout(1000);
       board.unshift([n2, n1]);
       return hand.splice(i, 1);
     } else if (n1 == b2) {
