@@ -1,100 +1,236 @@
 <!DOCTYPE html>
 <html>
+<link rel="stylesheet" href="./dominos.css" />
+
 <body>
+    <p>Click the button to start the game.</p>
 
-<p>Click the button to start the game.</p>
+    <button onclick="game()">Try it</button>
 
-<button onclick="game()">Try it</button>
+    <div id="demo">
+        <div id="board"></div>
+    </div>
 
-<p id="demo"></p>
+    <script>
+        const boardElement = document.getElementById('board');
 
-<script>
-    const createDeck = () => {
-  const tiles = [];
-  for (let i = 0; i < 7; i++) {
-    for (let k = i; k < 7; k++) {
-      tiles.push([i, k]);
-    }
-  }
-  return tiles;
-};
+        class Board {
+            constructor(initialTile) {
+                this.leftTiles = new Array(15).fill(null)
+                this.rightTiles = new Array(15).fill(null)
+                this.leftTiles[0] = [initialTile[1], initialTile[0]]
+                this.leftCount = 1
+                this.rightCount = 0
+                this.lastTileLeft = true
+                this.lastTileInd = 0
+            }
 
-const pickRandom = (tiles) => {
-  let index = Math.floor(Math.random() * tiles.length);
+            length() {
+                return this.leftCount + this.rightCount
+            }
 
-  return tiles.splice(index, 1)[0];
-};
+            leftElem() {
+                if (this.leftCount <= 15) {
+                    return this.leftTiles[this.leftCount - 1][1]
+                } else {
+                    return this.rightTiles[30 - this.leftCount][0]
+                }
+            }
 
-const pickHand = (tiles) => {
-  const hand = [];
-  for (let i = 0; i < 7; i++) {
-    hand.push(pickRandom(tiles));
-  }
-  return hand;
-};
+            rightElem() {
+                if (this.rightCount == 0) {
+                    return this.leftTiles[0][0]
+                } else if (this.rightCount <= 15) {
+                    return this.rightTiles[this.rightCount - 1][1]
+                } else {
+                    return this.leftTiles[30 - this.rightCount][0]
+                }
+            }
 
-const playTurn = (tiles, hand, board) => {
-  const b1 = board[0][0];
-  const b2 = board[board.length - 1][1];
-  for (let i = 0; i < hand.length; i++) {
-    const n1 = hand[i][0];
-    const n2 = hand[i][1];
-    if (n1 == b1) {
-      board.unshift([n2, n1]);
-      return hand.splice(i, 1);
-    } else if (n1 == b2) {
-      board.push([n1, n2]);
-      return hand.splice(i, 1);
-    } else if (n2 == b1) {
-      board.unshift([n1, n2]);
-      return hand.splice(i, 1);
-    } else if (n2 == b2) {
-      board.push([n2, n1]);
-      return hand.splice(i, 1);
-    }
-  }
+            pushLeft(tile) {
+                if (this.leftCount < 15) {
+                    this.leftTiles[this.leftCount] = [tile[1], tile[0]]
+                    this.lastTileLeft = true
+                    this.lastTileInd = this.leftCount
+                } else {
+                    this.rightTiles[30 - this.leftCount - 1] = tile
+                    this.lastTileLeft = false
+                    this.lastTileInd = 30 - this.leftCount - 1
+                }
+                this.leftCount += 1
+            }
 
-  if (tiles.length == 0) {
-    console.log('no tiles left, opponent wins');
-    throw 'no tiles left';
-  } else {
-    hand.push(pickRandom(tiles));
-    return playTurn(tiles, hand, board);
-    
-  }
-};
+            pushRight(tile) {
+                if (this.rightCount < 15) {
+                    this.rightTiles[this.rightCount] = tile
+                    this.lastTileLeft = false
+                    this.lastTileInd = this.rightCount
+                } else {
+                    this.leftTiles[30 - this.rightCount - 1] = [tile[1], tile[0]]
+                    this.lastTileLeft = true
+                    this.lastTileInd = 30 - this.rightCount - 1
+                }
+                this.rightCount += 1
+            }
 
-const game = () => {
-  const tiles = createDeck();
-  const board = [pickRandom(tiles)];
-  const handA = pickHand(tiles);
-  const handB = pickHand(tiles);
+            printBoard() {
+                console.log(this.leftTiles)
+                console.log(this.rightTiles)
+            }
 
-  while (true) {
-    if (handB.length > 0) {
-      const tile = playTurn(tiles, handA, board);
-      console.log(`Player A plays ${tile} `); 
-      console.log(board.reduce((acc, next) => `${acc}<${next[0]}:${next[1]}>`,""));
-    } else {
-      console.log('B WINS!!!');
-      break;
-    }
-  
+            isLastTileLeft() {
+                return this.lastTileLeft
+            }
 
-    if (handA.length > 0) {
-      const tile = playTurn(tiles, handB, board);
-      console.log(`Player B plays ${tile} `);
-      console.log(board.reduce((acc, next) => `${acc}<${next[0]}:${next[1]}>`,""));
-    } else { 
-      console.log('A WINS!!!');
-      break;
-    }
-    
-  }
-};
-game();
-    
-</script>
+            lastTileInd() {
+                return this.lastTileInd
+            }
+        }
 
+        const createDeck = () => {
+            const tiles = [];
+            for (let i = 0; i < 7; i++) {
+                for (let k = i; k < 7; k++) {
+                    tiles.push([i, k]);
+                }
+            }
+            return tiles;
+        };
+        const pickRandom = (tiles) => {
+            let index = Math.floor(Math.random() * tiles.length);
+
+            return tiles.splice(index, 1)[0];
+        };
+
+        const pickHand = (tiles) => {
+            const hand = [];
+            for (let i = 0; i < 7; i++) {
+                hand.push(pickRandom(tiles));
+            }
+            return hand;
+        };
+
+        const playTurn = (tiles, hand, board) => {
+            const b1 = board.leftElem();
+            const b2 = board.rightElem();
+            for (let i = 0; i < hand.length; i++) {
+                const n1 = hand[i][0];
+                const n2 = hand[i][1];
+                if (n1 == b1) {
+                    board.pushLeft([n2, n1]);
+                    return hand.splice(i, 1);
+                } else if (n1 == b2) {
+                    board.pushRight([n1, n2]);
+                    return hand.splice(i, 1);
+                } else if (n2 == b1) {
+                    board.pushLeft([n1, n2]);
+                    return hand.splice(i, 1);
+                } else if (n2 == b2) {
+                    board.pushRight([n2, n1]);
+                    return hand.splice(i, 1);
+                }
+            }
+
+            if (tiles.length == 0) {
+                console.log('no tiles left, opponent wins');
+                throw 'no tiles left';
+            } else {
+                hand.push(pickRandom(tiles));
+                return playTurn(tiles, hand, board);
+            }
+        };
+
+        const createTileImg = (tile, rotated) => {
+            const img = document.createElement('img');
+            if (tile === null) {
+                if (rotated) {
+                    img.src = './white_tileR.jpg';
+                } else {
+                    img.src = './white_tile.jpg';
+                }
+            } else {
+                const suffix = rotated ? 'R.jpg' : '.jpg'
+                img.src = `./${tile[0]},${tile[1]}` + suffix;
+            }
+            img.className = 'tile';
+            return img
+        }
+
+        const renderBoard = (board, playerName) => {
+            const turnNo = board.length()
+            board.printBoard()
+            boardElement.innerHTML = '';
+
+            const leftTiles = board.leftTiles;
+            const rightTiles = board.rightTiles;
+
+            const leftDiv = document.createElement('div')
+            const topDiv = document.createElement('div')
+            const bottomDiv = document.createElement('div')
+            const rightDiv = document.createElement('div')
+            const centerDiv = document.createElement('div')
+            const centerColumn = document.createElement('div');
+            leftDiv.className = 'tiles tiles-left'
+            topDiv.className = 'tiles tiles-top'
+            bottomDiv.className = 'tiles tiles-bottom'
+            rightDiv.className = 'tiles tiles-right'
+            centerDiv.className = 'center-div'
+            centerColumn.className = 'center-column';
+
+
+            boardElement.appendChild(leftDiv);
+            boardElement.appendChild(centerColumn);
+            centerColumn.appendChild(topDiv);
+            centerColumn.appendChild(centerDiv);
+            centerColumn.appendChild(bottomDiv);
+            boardElement.appendChild(rightDiv);
+
+            for (let i = 0; i < 7; i++) {
+                leftDiv.appendChild(createTileImg(leftTiles[i], true))
+                rightDiv.appendChild(createTileImg(rightTiles[8 + i], true))
+            }
+
+            for (let i = 0; i < 8; i++) {
+                bottomDiv.appendChild(createTileImg(leftTiles[7 + i], false))
+                topDiv.appendChild(createTileImg(rightTiles[i], false))
+            }
+        };
+
+        const game = () => {
+            const tiles = createDeck();
+            let board = new Board(pickRandom(tiles));
+            const handA = pickHand(tiles);
+            const handB = pickHand(tiles);
+
+            renderBoard(board);
+
+            let step = 0
+            const intervalId = setInterval(gameStep, 1000);
+
+            function gameStep() {
+                if (step % 2 == 0) {
+                    if (handB.length > 0) {
+                        const tile = playTurn(tiles, handA, board);
+                        console.log(`Player A plays ${tile}`);
+                        renderBoard(board);
+                    } else {
+                        console.log('B WINS!!!');
+                        clearInterval(intervalId);
+                    }
+                } else {
+                    if (handA.length > 0) {
+                        const tile = playTurn(tiles, handB, board);
+                        console.log(`Player B plays ${tile}`);
+                        renderBoard(board);
+                    } else {
+                        console.log('A WINS!!!');
+                        clearInterval(intervalId);
+                    }
+                }
+                step += 1
+            }
+        };
+    </script>
 </body>
+
 </html>
